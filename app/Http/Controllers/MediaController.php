@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/MediaController.php
 
 namespace App\Http\Controllers;
 
@@ -9,48 +8,55 @@ use App\Jobs\ProcessMediaDownload;
 use App\Models\DownloadHistory;
 use Illuminate\Support\Str;
 
-class MediaController extends Controller
+class MediaController
 {
     public function __construct(private MediaExtractorService $extractor) {}
 
     public function fetchInfo(Request $request)
     {
+        // Validar que sea Tiktok o Instagram
         $request->validate([
-            'url' => ['required', 'url', 'regex:/^(https?:\/\/)?(www\.)?(tiktok\.com|instagram\.com)\/.+$/i']
+            'url' => ['required', 'url', 'regex:/^(https?:\/\/)?([a-zA-Z0-9-]+\.)*(tiktok\.com|instagram\.com)\/.+$/i']
         ]);
 
         try {
             $metadata = $this->extractor->getMetadata($request->url);
             
             return response()->json([
-                'title' => $metadata['title'] ?? 'Media',
+                'title' => $metadata['title'] ?? 'Multimedia Desconocido',
                 'thumbnail' => $metadata['thumbnail'] ?? null,
-                'duration' => $metadata['duration'] ?? 0,
+                'duration' => isset($metadata['duration']) ? gmdate("i:s", $metadata['duration']) : '00:00',
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'No se pudo obtener la información.'], 500);
+            return response()->json(['error' => $e->getMessage()], 422);
         }
     }
 
     public function startDownload(Request $request)
     {
         $request->validate([
-            'url' => 'required|url',
-            'format' => 'required|in:mp4,mp3'
+            'url' => ['required', 'url', 'regex:/^(https?:\/\/)?([a-zA-Z0-9-]+\.)*(tiktok\.com|instagram\.com)\/.+$/i'],
+            'format' => 'required|in:mp4,mp3',
+            'title' => 'nullable|string|max:200'
         ]);
 
-        $jobId = Str::uuid();
+        $jobId = (string) Str::uuid();
+
+        // NUEVO: Limpiamos el título (quita acentos, emojis y pone guiones)
+        $safeTitle = Str::slug($request->input('title', 'video-descargado'));
+        // Le pegamos 5 letritas del ID al final por si el usuario descarga 2 videos con el mismo nombre, no se sobreescriban.
+        $fileName = $safeTitle . '-' . substr($jobId, 0, 5) . '.' . $request->format;
         
-        // Registrar en BD con estado "pending"
         $history = DownloadHistory::create([
             'job_id' => $jobId,
             'url' => $request->url,
             'format' => $request->format,
-            'status' => 'pending'
+            'status' => 'pending',
+            'file_name' => $fileName
         ]);
 
-        // Enviar a la cola de Redis
-        ProcessMediaDownload::dispatch($history)->onQueue('downloads');
+        // Despachar el Job
+        ProcessMediaDownload::dispatch($history);
 
         return response()->json(['job_id' => $jobId]);
     }
@@ -58,9 +64,15 @@ class MediaController extends Controller
     public function checkStatus($jobId)
     {
         $job = DownloadHistory::where('job_id', $jobId)->firstOrFail();
+        
+        $downloadUrl = null;
+        if ($job->status === 'completed' && $job->file_name) {
+            $downloadUrl = asset('storage/downloads/' . $job->file_name);
+        }
+
         return response()->json([
             'status' => $job->status,
-            'download_url' => $job->status === 'completed' ? asset('storage/downloads/' . $job->file_name) : null
+            'download_url' => $downloadUrl
         ]);
     }
 }
