@@ -1,59 +1,41 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🛠️ MediaFactory - Herramientas Multimedia Asíncronas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+¡Bienvenido a **MediaFactory**! Una potente aplicación web moderna tipo "Navaja Suiza" construida con **Laravel 11** y **Tailwind CSS**. Este sistema permite procesar descargas de redes sociales y realizar conversiones de documentos de manera 100% asíncrona mediante colas de trabajo (*Queue Jobs*), evitando la sobrecarga del servidor y garantizando una experiencia de usuario fluida (estilo SPA).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🚀 Características Principales
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 📺 Módulo de Descarga de Videos
+*   **Compatibilidad:** Descarga contenido de **TikTok** (incluyendo enlaces móviles `vt.` y `vm.`) e **Instagram** mediante URL.
+*   **Sin Marca de Agua:** Extracción limpia utilizando los extractores nativos de `yt-dlp`.
+*   **Formatos:** Descarga de video en **MP4** o extracción directa de audio en **MP3**.
+*   **Nombres Limpios:** Los archivos se renombran automáticamente usando el título del video sanitizado (`Str::slug()`) para mayor comodidad del usuario.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 📄 Módulo de Conversión de Documentos
+*   **PDF a Imágenes:** Extrae todas las páginas de un archivo PDF y las empaqueta automáticamente en un archivo **ZIP** con imágenes JPG de alta calidad.
+*   **Imágenes a PDF (Próximamente expandido):** Une imágenes en un único documento PDF optimizado.
+*   **Rutas Seguras:** Normalización y limpieza estricta de rutas binarias para entornos Windows y Linux.
 
-## Learning Laravel
+### 🛡️ Arquitectura y Seguridad
+*   **Procesamiento en Segundo Plano:** El trabajo pesado (`yt-dlp`, `pdftoppm`, `magick`) se delega a la base de datos mediante *Queue Workers*.
+*   **Seguridad CLI:** Ejecución de binarios mediante el componente seguro `Process` de Symfony, mitigando riesgos de inyección arbitraria de comandos de shell.
+*   **Interfaz Limpia:** Panel de control responsivo con Tailwind CSS estructurado como una Single Page Application mediante JavaScript nativo.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 📐 Arquitectura del Sistema
 
-## Laravel Sponsors
+El proyecto sigue una estructura limpia separando la lógica de controladores de la capa de ejecución de comandos mediante **Servicios** y **Jobs**:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+app/
+├── Http/Controllers/
+│   ├── MediaController.php      # Validación de URLs y despacho de descargas
+│   └── FileController.php       # Gestión de uploads de archivos y despacho de conversiones
+├── Jobs/
+│   ├── ProcessMediaDownload.php # Worker encargado de correr yt-dlp/ffmpeg
+│   └── ProcessFile.php          # Worker encargado de correr poppler/imagemagick
+└── Services/
+    ├── MediaExtractorService.php # Envoltorio seguro para CLI de video
+    └── FileConverterService.php  # Envoltorio seguro para herramientas de oficina
