@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Video;
 
-use App\Models\DownloadHistory;
-use App\Services\MediaExtractorService;
+use App\Models\Video\DownloadHistory;
+use App\Services\Video\MediaExtractorService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

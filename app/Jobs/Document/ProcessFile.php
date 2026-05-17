@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Document;
 
-use App\Models\FileConversion;
-use App\Services\FileConverterService;
+use App\Models\Document\FileConversion;
+use App\Services\Document\FileConverterService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -47,6 +47,11 @@ class ProcessFile implements ShouldQueue
             elseif ($this->conversion->conversion_type === 'img_to_pdf') {
                 $outputPdf = $storageDir . DIRECTORY_SEPARATOR . $safeName . '.pdf';
                 $resultFile = $converter->convertImagesToPdf([$inputPath], $outputPdf);
+            }
+            // === NUEVO MÓDULO ===
+            elseif ($this->conversion->conversion_type === 'remove_bg') {
+                $outputPng = $storageDir . DIRECTORY_SEPARATOR . $safeName . '.png';
+                $resultFile = $converter->removeBackground($inputPath, $outputPng);
             }
 
             // Actualizar la base de datos con el éxito

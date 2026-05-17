@@ -1,5 +1,5 @@
 <?php
-namespace App\Models;
+namespace App\Models\Document;
 use Illuminate\Database\Eloquent\Model;
 
 class FileConversion extends Model

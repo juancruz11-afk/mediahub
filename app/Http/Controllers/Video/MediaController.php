@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Video;
 
 use Illuminate\Http\Request;
-use App\Services\MediaExtractorService;
-use App\Jobs\ProcessMediaDownload;
-use App\Models\DownloadHistory;
+use App\Services\Video\MediaExtractorService;
+use App\Jobs\Video\ProcessMediaDownload;
+use App\Models\Video\DownloadHistory;
 use Illuminate\Support\Str;
 
 class MediaController

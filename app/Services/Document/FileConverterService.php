@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Document;
 
 use Symfony\Component\Process\Process;
 
@@ -72,4 +72,28 @@ class FileConverterService
 
         return basename($outputPdfPath);
     }
+
+    /**
+     * Remueve el fondo de una imagen usando el modelo de IA Rembg
+     */
+    public function removeBackground(string $imagePath, string $outputPath): string
+    {
+        // Al igual que con Poppler, limpiamos las rutas para Windows
+        $imagePath = str_replace('\\', '/', realpath($imagePath));
+        
+        // rembg requiere que el archivo de salida sea estrictamente .png para soportar transparencia
+        $outputPath = str_replace('\\', '/', $outputPath);
+
+        // El comando es simple: rembg i "ruta/entrada.jpg" "ruta/salida.png"
+        $process = new Process(['rembg.exe', 'i', $imagePath, $outputPath]);
+        $process->setTimeout(300); // 5 minutos máximo por si la imagen es gigante
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new \Exception("Error en Rembg: " . $process->getErrorOutput());
+        }
+
+        return basename($outputPath);
+    }
 }
+

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Document;
 
 use Illuminate\Http\Request;
-use App\Models\FileConversion;
-use App\Jobs\ProcessFile;
+use App\Services\Document\FileConverterService;
+use App\Jobs\Document\ProcessFile;
+use App\Models\Document\FileConversion;
 use Illuminate\Support\Str;
 
 class FileController
@@ -13,13 +14,17 @@ class FileController
     {
         $request->validate([
             'file' => 'required|file|max:20480', // Máximo 20MB
-            'type' => 'required|in:pdf_to_img,img_to_pdf'
+            'type' => 'required|in:pdf_to_img,img_to_pdf,remove_bg'
         ]);
 
         $file = $request->file('file');
         // Validar extensión real por seguridad
         if ($request->type === 'pdf_to_img' && $file->extension() !== 'pdf') {
             return response()->json(['error' => 'Debes subir un archivo PDF.'], 422);
+        }
+        // NUEVO: Validar que sea una imagen para quitar fondo
+        if ($request->type === 'remove_bg' && !in_array($file->extension(), ['jpg', 'jpeg', 'png', 'webp'])) {
+            return response()->json(['error' => 'Debes subir una imagen válida (JPG, PNG, WEBP).'], 422);
         }
 
         $jobId = (string) Str::uuid();
